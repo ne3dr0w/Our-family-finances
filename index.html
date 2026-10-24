@@ -29,18 +29,17 @@
     </header>
 
     <main class="max-w-4xl mx-auto px-4 mt-6 space-y-6">
-        <!-- Sync Banner for Family -->
-        <div class="bg-amber-50 border border-amber-200 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <!-- Family WhatsApp Share Banner -->
+        <div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-                <h4 class="text-sm font-bold text-amber-900 flex items-center gap-1.5">
-                    <i data-lucide="cloud-sync" class="w-4 h-4 text-amber-700"></i> Family Cloud Sync Active
+                <h4 class="text-sm font-bold text-emerald-900 flex items-center gap-1.5">
+                    <i data-lucide="message-circle" class="w-4 h-4 text-emerald-700"></i> Family WhatsApp Sync
                 </h4>
-                <p class="text-xs text-amber-700 mt-0.5">Shared basket syncs in real-time across Sagar, Amita, and kids' phones.</p>
+                <p class="text-xs text-emerald-700 mt-0.5">Instantly broadcast new basket items to the family WhatsApp group.</p>
             </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <input type="text" id="sync-room" value="priory-crescent-family-basket" placeholder="Room ID" class="px-3 py-1.5 bg-white border border-amber-300 rounded-xl text-xs font-mono w-full sm:w-48">
-                <button onclick="syncCloudData()" class="bg-amber-700 hover:bg-amber-800 text-white px-4 py-1.5 rounded-xl text-xs font-semibold transition shrink-0">Sync Now</button>
-            </div>
+            <button onclick="shareToWhatsApp()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-2 w-full sm:w-auto justify-center">
+                <span>💬 Share Basket to WhatsApp</span>
+            </button>
         </div>
 
         <!-- Tab Navigation -->
@@ -194,10 +193,14 @@
         }
 
         let basketItems = JSON.parse(localStorage.getItem('priory_basket') || '[]');
-        
-        async function syncCloudData() {
-            localStorage.setItem('priory_basket_sync', JSON.stringify({ items: basketItems, time: Date.now() }));
-            alert('Cloud sync updated successfully across devices!');
+
+        function shareToWhatsApp() {
+            if (basketItems.length === 0) {
+                alert('Your Priory Basket is currently empty!');
+                return;
+            }
+            const text = encodeURIComponent("🛒 *Priory Crescent Sunday Basket Update*:\n" + basketItems.map((item, i) => `${i+1}. ${item}`).join('\n') + "\n\n_Added via our family wealth app_");
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
         }
 
         function renderBasket() {
@@ -219,7 +222,6 @@
             if (input.value.trim() !== '') {
                 basketItems.push(input.value.trim());
                 localStorage.setItem('priory_basket', JSON.stringify(basketItems));
-                localStorage.setItem('priory_basket_sync', JSON.stringify({ items: basketItems, time: Date.now() }));
                 input.value = '';
                 renderBasket();
             }
@@ -228,20 +230,8 @@
         function removeBasketItem(index) {
             basketItems.splice(index, 1);
             localStorage.setItem('priory_basket', JSON.stringify(basketItems));
-            localStorage.setItem('priory_basket_sync', JSON.stringify({ items: basketItems, time: Date.now() }));
             renderBasket();
         }
-
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'priory_basket_sync') {
-                const data = JSON.parse(e.newValue);
-                if (data && data.items) {
-                    basketItems = data.items;
-                    localStorage.setItem('priory_basket', JSON.stringify(basketItems));
-                    renderBasket();
-                }
-            }
-        });
 
         let auditLogs = JSON.parse(localStorage.getItem('priory_audits') || '[]');
         function renderAudits() {
