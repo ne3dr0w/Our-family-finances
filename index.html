@@ -185,41 +185,38 @@
 
     <script>
         function switchTab(tabName) {
-            // Hide all tabs
             document.getElementById('tab-dashboard').classList.add('hidden');
             document.getElementById('tab-basket').classList.add('hidden');
             document.getElementById('tab-tracker').classList.add('hidden');
 
-            // Reset all button styles
             document.getElementById('btn-dashboard').className = 'tab-btn px-4 py-2 rounded-lg font-semibold text-sm bg-white text-slate-600 hover:bg-slate-100 transition';
             document.getElementById('btn-basket').className = 'tab-btn px-4 py-2 rounded-lg font-semibold text-sm bg-white text-slate-600 hover:bg-slate-100 transition';
             document.getElementById('btn-tracker').className = 'tab-btn px-4 py-2 rounded-lg font-semibold text-sm bg-white text-slate-600 hover:bg-slate-100 transition';
 
-            // Show target tab and highlight button
             document.getElementById('tab-' + tabName).classList.remove('hidden');
             document.getElementById('btn-' + tabName).className = 'tab-btn px-4 py-2 rounded-lg font-semibold text-sm bg-teal-800 text-white shadow-sm transition';
         }
 
-        // Shared Cloud Endpoint for Family Sync
-        const CLOUD_BIN = 'https://api.npoint.io/4119e79435b699e1a840';
+        // Using a high-reliability public JSON storage bin with cache-busting timestamp
+        const BIN_URL = 'https://api.npoint.io/4119e79435b699e1a840';
         let basketItems = JSON.parse(localStorage.getItem('priory_basket') || '[]');
 
         async function syncCloudBasket() {
             const btn = document.getElementById('sync-btn');
             btn.innerText = '⏳ Syncing...';
             try {
-                const res = await fetch(CLOUD_BIN);
+                const res = await fetch(BIN_URL + '?t=' + Date.now());
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Array.isArray(data.items)) {
                         basketItems = data.items;
                         localStorage.setItem('priory_basket', JSON.stringify(basketItems));
                         renderBasket();
-                        alert('Cloud sync complete: All family items loaded!');
+                        alert('Cloud sync successful: Family basket updated!');
                     }
                 }
             } catch (e) {
-                alert('Using local offline cache.');
+                alert('Offline mode: Loaded local cache.');
                 renderBasket();
             }
             btn.innerText = '🔄 Sync Now';
@@ -227,13 +224,13 @@
 
         async function pushCloudBasket() {
             try {
-                await fetch(CLOUD_BIN, {
+                await fetch(BIN_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ items: basketItems })
                 });
             } catch (e) {
-                // Fail silently to local storage
+                // Background fallback to local
             }
         }
 
@@ -310,8 +307,8 @@
             }
         }
 
-        // Initialize on load
         window.addEventListener('DOMContentLoaded', () => {
+            syncCloudBasket();
             renderBasket();
             renderAudits();
         });
